@@ -1,11 +1,4 @@
 {
-  "version": 2,
-  "builds": [
-    {
-      "src": "package.json",
-      "use": "@vercel/next"
-    }
-  ],
   "env": {
     "NEXT_PUBLIC_SUPABASE_URL": "https://espcgyteztrqzfarqafq.supabase.co",
     "NEXT_PUBLIC_SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVzcGNneXRlenRycXpmYXJxYWZxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDU1NDE3MjUsImV4cCI6MjA2MTExNzcyNX0.gANfSCZWmJGDXY3alVTW8sBV8UeVvxRa-S2xLcWvOOs",
