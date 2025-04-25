@@ -1,0 +1,105 @@
+# QR MICE Event Attendance System - Project Intelligence
+
+## Project Patterns and Preferences
+
+### Directory Structure
+- Use `/src/components` for reusable UI components
+- Use `/src/app` for Next.js App Router pages
+- Use `/src/lib` for utilities and services
+- Use `/docs` for documentation files
+- Use `/memory-bank` for project memory files
+
+### Code Style
+- Use TypeScript for all components and functions
+- Use functional components with hooks (no class components)
+- Use 'use client' directive for client components
+- Use server components where possible
+- Add explicit types for all function parameters and returns
+
+### Naming Conventions
+- PascalCase for component files and React components
+- camelCase for functions, variables, and instances
+- kebab-case for CSS class names
+- snake_case for database column names
+
+### Component Organization
+- Split large components into smaller, focused components
+- Keep related components together in feature-specific directories
+- Use index.ts files for exporting multiple components from a directory
+
+### State Management
+- Use React hooks (useState, useEffect) for local state
+- Use context where needed for shared state
+- Prefer prop drilling for simple component hierarchies
+- Use react-hook-form for form state and validation
+
+### Database Patterns
+- Use UUID primary keys
+- Include created_at and updated_at timestamps in all tables
+- Use foreign key constraints for relationships
+- Implement Row-Level Security (RLS) for data protection
+
+### API Patterns
+- Use Next.js API routes for server operations
+- Implement proper error handling in all API calls
+- Return consistent response formats from API endpoints
+- Use server-side validation for all inputs
+
+### UI/UX Patterns
+- Implement responsive design for all screens
+- Use loading states for asynchronous operations
+- Provide clear feedback for user actions
+- Ensure accessible color contrast and keyboard navigation
+
+## Critical Implementation Paths
+
+### QR Code Generation
+- Generate unique identifiers using crypto.randomUUID()
+- Store QR code data in the students table
+- Use qrcode.react for rendering QR codes
+- Implement printable layout for ID attachment
+
+### QR Code Scanning
+- Use react-qr-reader for camera access and scanning
+- Implement toggle for time-in/time-out modes
+- Provide clear visual feedback for successful/failed scans
+- Handle edge cases (invalid QR codes, no camera access)
+
+### Email Notifications
+- Use server-side implementation for nodemailer
+- Create professional HTML email templates
+- Track email sent status to prevent duplicates
+- Handle email sending errors gracefully
+
+## Known Challenges
+
+### QR Scanner Compatibility
+- Different browsers have varying camera API support
+- Mobile devices may require additional permissions
+- Performance varies across devices and camera quality
+
+### Email Delivery
+- Gmail SMTP has rate limits and may be blocked by some email providers
+- Email notifications may be delayed or filtered as spam
+- App password authentication required for Gmail SMTP
+
+### Deployment Considerations
+- Environment variables must be properly configured in Vercel
+- Supabase connection may require specific settings in production
+- QR scanner requires HTTPS for camera access in production
+
+## User Workflow Preferences
+
+### Administrator Workflow
+1. Admin logs in to the system
+2. Manages students (add, edit, remove)
+3. Creates events with details
+4. Generates and prints QR codes for students
+5. Views attendance reports and analytics
+
+### Secretary Workflow
+1. Secretary accesses the scanner interface
+2. Selects the active event
+3. Sets scanner to time-in or time-out mode
+4. Scans student QR codes as they arrive/leave
+5. Receives real-time feedback on scan status 

@@ -1,0 +1,134 @@
+classDiagram
+    class Auth {
+        +login(email: string, password: string): Promise~Session~
+        +logout(): Promise~void~
+        +resetPassword(email: string): Promise~void~
+        +getCurrentUser(): User
+        +isAuthenticated(): boolean
+    }
+    
+    class Student {
+        +id: string
+        +name: string
+        +email: string
+        +qrCodeData: string
+        +createdAt: Date
+        +updatedAt: Date
+        +constructor(id: string, name: string, email: string)
+        +generateQRCode(): string
+    }
+    
+    class StudentService {
+        +getAllStudents(): Promise~Student[]~
+        +getStudentById(id: string): Promise~Student~
+        +createStudent(name: string, email: string): Promise~Student~
+        +updateStudent(id: string, data: object): Promise~Student~
+        +deleteStudent(id: string): Promise~void~
+        +generateQRCodes(studentIds: string[]): Promise~string[]~
+        +printQRCodes(qrCodes: string[]): void
+    }
+    
+    class AttendanceRecord {
+        +id: string
+        +studentId: string
+        +eventId: string
+        +timeIn: Date
+        +timeOut: Date
+        +emailSentIn: boolean
+        +emailSentOut: boolean
+        +createdAt: Date
+        +updatedAt: Date
+        +constructor(studentId: string, eventId: string)
+        +recordTimeIn(): void
+        +recordTimeOut(): void
+    }
+    
+    class AttendanceService {
+        +getAttendanceByEvent(eventId: string): Promise~AttendanceRecord[]~
+        +getAttendanceByStudent(studentId: string): Promise~AttendanceRecord[]~
+        +recordTimeIn(studentId: string, eventId: string): Promise~AttendanceRecord~
+        +recordTimeOut(studentId: string, eventId: string): Promise~AttendanceRecord~
+        +getAttendanceReport(eventId: string): Promise~Report~
+        +exportToCSV(eventId: string): string
+    }
+    
+    class Event {
+        +id: string
+        +name: string
+        +description: string
+        +date: Date
+        +startTime: string
+        +endTime: string
+        +location: string
+        +createdAt: Date
+        +updatedAt: Date
+        +constructor(name: string, date: Date, startTime: string, endTime: string)
+    }
+    
+    class EventService {
+        +getAllEvents(): Promise~Event[]~
+        +getEventById(id: string): Promise~Event~
+        +createEvent(data: object): Promise~Event~
+        +updateEvent(id: string, data: object): Promise~Event~
+        +deleteEvent(id: string): Promise~void~
+    }
+    
+    class QRCodeGenerator {
+        +generateForStudent(student: Student): string
+        +generateBulk(students: Student[]): string[]
+        +createPrintableFormat(qrCodes: string[]): Blob
+    }
+    
+    class QRCodeScanner {
+        +startScanning(): void
+        +stopScanning(): void
+        +handleScan(data: string): void
+        +isScanningActive: boolean
+        +scanMode: string
+    }
+    
+    class EmailService {
+        +sendAttendanceConfirmation(student: Student, event: Event, type: string): Promise~boolean~
+        +sendBulkEmails(recipients: string[], subject: string, content: string): Promise~object~
+        +createEmailTemplate(type: string, data: object): string
+    }
+    
+    class SupabaseClient {
+        +url: string
+        +key: string
+        +auth: Auth
+        +db: Database
+        +storage: Storage
+        +constructor(url: string, key: string)
+        +initializeClient(): void
+    }
+    
+    class DashboardController {
+        +getAttendanceSummary(eventId: string): Promise~object~
+        +getPresentStudents(eventId: string): Promise~Student[]~
+        +getAbsentStudents(eventId: string): Promise~Student[]~
+        +getAttendanceStatistics(): Promise~object~
+    }
+    
+    class AppConfig {
+        +supabaseUrl: string
+        +supabaseKey: string
+        +emailConfig: object
+    }
+    
+    SupabaseClient -- Auth
+    Student -- StudentService
+    Student -- QRCodeGenerator
+    AttendanceRecord -- AttendanceService
+    Event -- EventService
+    AttendanceService -- EmailService
+    StudentService -- QRCodeGenerator
+    QRCodeScanner -- AttendanceService
+    DashboardController -- AttendanceService
+    DashboardController -- StudentService
+    DashboardController -- EventService
+    SupabaseClient -- StudentService
+    SupabaseClient -- AttendanceService
+    SupabaseClient -- EventService
+    AppConfig -- SupabaseClient
+    AppConfig -- EmailService
