@@ -25,7 +25,7 @@ type ScanResult = {
   type: ScanMode;
 };
 
-export default function QRScanner() {
+export default function ScannerPage() {
   const [scanMode, setScanMode] = useState<ScanMode>('in');
   const [selectedEvent, setSelectedEvent] = useState<string>('');
   const [events, setEvents] = useState<Event[]>([]);
