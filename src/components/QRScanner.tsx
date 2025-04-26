@@ -1,8 +1,9 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+// @ts-ignore - Ignoring type issues with react-webcam
 import Webcam from 'react-webcam';
-// @ts-ignore
+// @ts-ignore - Ignoring type issues with jsQR
 import jsQR from 'jsqr';
 
 // Define types for jsQR results
