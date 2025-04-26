@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import QrScanner from 'react-qr-scanner';
+import { Html5Qrcode } from 'html5-qrcode';
 import Header from '@/components/Header';
 import {
   getStudentByQRCode,
@@ -33,6 +33,8 @@ export default function QRScanner() {
   const [error, setError] = useState('');
   const [scanning, setScanning] = useState(false);
   const [scanResults, setScanResults] = useState<ScanResult[]>([]);
+  const scannerRef = useRef<Html5Qrcode | null>(null);
+  const scannerContainerRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     async function loadEvents() {
@@ -54,6 +56,20 @@ export default function QRScanner() {
     }
 
     loadEvents();
+  }, []);
+
+  useEffect(() => {
+    // Initialize scanner when component mounts
+    if (typeof window !== 'undefined' && !scannerRef.current) {
+      scannerRef.current = new Html5Qrcode('qr-reader');
+    }
+
+    // Cleanup scanner when component unmounts
+    return () => {
+      if (scannerRef.current && scannerRef.current.isScanning) {
+        scannerRef.current.stop().catch(err => console.error('Error stopping scanner:', err));
+      }
+    };
   }, []);
 
   const handleScan = async (data: string | null) => {
@@ -140,7 +156,43 @@ export default function QRScanner() {
   };
 
   const toggleScanning = () => {
-    setScanning(!scanning);
+    if (scanning) {
+      // Stop scanning
+      if (scannerRef.current && scannerRef.current.isScanning) {
+        scannerRef.current.stop()
+          .then(() => {
+            console.log('Scanner stopped');
+            setScanning(false);
+          })
+          .catch(err => {
+            console.error('Error stopping scanner:', err);
+          });
+      } else {
+        setScanning(false);
+      }
+    } else {
+      // Start scanning
+      if (scannerRef.current && !scannerRef.current.isScanning) {
+        const config = { fps: 10, qrbox: 250 };
+        scannerRef.current.start(
+          { facingMode: 'environment' },
+          config,
+          (decodedText) => {
+            handleScan(decodedText);
+          },
+          (errorMessage) => {
+            console.error('QR Code scanning error:', errorMessage);
+          }
+        )
+        .then(() => {
+          console.log('Scanner started');
+          setScanning(true);
+        })
+        .catch(err => {
+          console.error('Error starting scanner:', err);
+        });
+      }
+    }
   };
 
   if (loading) {
@@ -293,29 +345,23 @@ export default function QRScanner() {
               </div>
               <div className="card-body">
                 {scanning ? (
-                  <div className="overflow-hidden rounded-lg">
-                    <QrScanner
-                      delay={500}
-                      onScan={(result) => {
-                        if (result && result.text) {
-                          handleScan(result.text);
-                        }
+                  <div className="overflow-hidden rounded-lg relative">
+                    <div
+                      id="qr-reader"
+                      ref={scannerContainerRef}
+                      style={{
+                        width: '100%',
+                        minHeight: '300px',
+                        position: 'relative'
                       }}
-                      onError={(error) => {
-                        console.error("QR Scanner error:", error);
-                      }}
-                      style={{ width: '100%' }}
-                      constraints={{
-                        video: { facingMode: 'environment' }
-                      }}
-                    />
+                    ></div>
                     <div
                       style={{
                         position: 'absolute',
                         top: '50%',
                         left: '50%',
-                        width: '200px',
-                        height: '200px',
+                        width: '250px',
+                        height: '250px',
                         transform: 'translate(-50%, -50%)',
                         border: '2px solid #0ea5e9',
                         borderRadius: '8px',
