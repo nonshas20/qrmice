@@ -2,7 +2,26 @@
 
 import { useState, useEffect, useRef } from 'react';
 import Webcam from 'react-webcam';
+// @ts-ignore
 import jsQR from 'jsqr';
+
+// Define types for jsQR results
+interface Point {
+  x: number;
+  y: number;
+}
+
+interface QRLocation {
+  topLeftCorner: Point;
+  topRightCorner: Point;
+  bottomRightCorner: Point;
+  bottomLeftCorner: Point;
+}
+
+interface QRCode {
+  data: string;
+  location: QRLocation;
+}
 
 interface QRScannerProps {
   onScan: (data: string) => void;
@@ -45,7 +64,7 @@ const QRScanner: React.FC<QRScannerProps> = ({ onScan, isScanning }) => {
         // Scan for QR code
         const code = jsQR(imageData.data, imageData.width, imageData.height, {
           inversionAttempts: 'dontInvert',
-        });
+        }) as QRCode | null;
 
         // If QR code found
         if (code) {
@@ -75,6 +94,10 @@ const QRScanner: React.FC<QRScannerProps> = ({ onScan, isScanning }) => {
         }
       } catch (err) {
         console.error('Error scanning QR code:', err);
+        // Only set error if it's a persistent issue
+        if (!hasScanned) {
+          setError('Error scanning QR code. Please try again or use a different device.');
+        }
       }
     }
   };

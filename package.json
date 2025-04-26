@@ -27,6 +27,7 @@
     "@types/nodemailer": "^6.4.17",
     "@types/react": "^18.2.0",
     "@types/react-dom": "^18.2.0",
+    "@types/react-webcam": "^3.0.0",
     "autoprefixer": "^10.4.16",
     "eslint": "^8.55.0",
     "eslint-config-next": "14.0.4",
