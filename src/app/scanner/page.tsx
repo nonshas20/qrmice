@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { QrReader } from 'react-qr-reader';
+import QrScanner from 'react-qr-scanner';
 import Header from '@/components/Header';
 import {
   getStudentByQRCode,
@@ -33,18 +33,18 @@ export default function QRScanner() {
   const [error, setError] = useState('');
   const [scanning, setScanning] = useState(false);
   const [scanResults, setScanResults] = useState<ScanResult[]>([]);
-  
+
   useEffect(() => {
     async function loadEvents() {
       try {
         const eventsData = await getEvents();
         setEvents(eventsData);
-        
+
         // Auto-select the most recent event if available
         if (eventsData.length > 0) {
           setSelectedEvent(eventsData[0].id);
         }
-        
+
         setLoading(false);
       } catch (err) {
         console.error('Error loading events:', err);
@@ -52,13 +52,19 @@ export default function QRScanner() {
         setLoading(false);
       }
     }
-    
+
     loadEvents();
   }, []);
-  
+
   const handleScan = async (data: string | null) => {
     if (!data || !selectedEvent || !scanning) return;
-    
+
+    // Prevent duplicate scans by checking if the last scan was the same QR code
+    const lastScan = scanResults[0];
+    if (lastScan && lastScan.message === 'Processing QR code...') {
+      return; // Already processing a scan
+    }
+
     try {
       // Show a temporary scanning message
       setScanResults([
@@ -85,14 +91,14 @@ export default function QRScanner() {
           scanMode,
         }),
       });
-      
+
       // Parse the response even if it's an error
       const responseData = await response.json();
 
       if (!response.ok) {
         throw new Error(responseData.error || responseData.details || 'Failed to record attendance');
       }
-      
+
       // Add to scan results
       setScanResults([
         {
@@ -109,12 +115,12 @@ export default function QRScanner() {
       ]);
     } catch (err: any) {
       console.error('Error processing scan:', err);
-      
+
       // Use the first scan result if it's the processing message
-      const filteredResults = scanResults[0]?.message === 'Processing QR code...' 
-        ? scanResults.slice(1) 
+      const filteredResults = scanResults[0]?.message === 'Processing QR code...'
+        ? scanResults.slice(1)
         : scanResults;
-      
+
       setScanResults([
         {
           studentName: 'Error',
@@ -128,15 +134,15 @@ export default function QRScanner() {
       ]);
     }
   };
-  
+
   const toggleScanMode = () => {
     setScanMode(scanMode === 'in' ? 'out' : 'in');
   };
-  
+
   const toggleScanning = () => {
     setScanning(!scanning);
   };
-  
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50">
@@ -149,7 +155,7 @@ export default function QRScanner() {
       </div>
     );
   }
-  
+
   if (error) {
     return (
       <div className="min-h-screen bg-gray-50">
@@ -164,7 +170,7 @@ export default function QRScanner() {
       </div>
     );
   }
-  
+
   if (events.length === 0) {
     return (
       <div className="min-h-screen bg-gray-50">
@@ -185,15 +191,15 @@ export default function QRScanner() {
       </div>
     );
   }
-  
+
   return (
     <div className="min-h-screen bg-gray-50">
       <Header />
-      
+
       <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
         <div className="px-4 py-6 sm:px-0">
           <h1 className="text-2xl font-semibold text-gray-900 mb-6">QR Code Scanner</h1>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {/* Scanner Controls */}
             <div className="card md:col-span-1 flex flex-col">
@@ -220,7 +226,7 @@ export default function QRScanner() {
                         ))}
                       </select>
                     </div>
-                    
+
                     <div className="mb-6">
                       <label className="form-label">Scan Mode</label>
                       <div className="mt-2">
@@ -250,7 +256,7 @@ export default function QRScanner() {
                       </div>
                     </div>
                   </div>
-                  
+
                   <div className="mt-4">
                     <button
                       onClick={toggleScanning}
@@ -266,7 +272,7 @@ export default function QRScanner() {
                 </div>
               </div>
             </div>
-            
+
             {/* Scanner */}
             <div className="card md:col-span-2">
               <div className="card-header">
@@ -288,33 +294,34 @@ export default function QRScanner() {
               <div className="card-body">
                 {scanning ? (
                   <div className="overflow-hidden rounded-lg">
-                    <QrReader
-                      onResult={(result, error) => {
-                        if (result) {
-                          handleScan(result.getText());
+                    <QrScanner
+                      delay={500}
+                      onScan={(result) => {
+                        if (result && result.text) {
+                          handleScan(result.text);
                         }
                       }}
-                      constraints={{ facingMode: 'environment' }}
-                      containerStyle={{ width: '100%' }}
-                      videoStyle={{ width: '100%' }}
-                      videoContainerStyle={{ width: '100%', paddingTop: '75%', position: 'relative' }}
-                      videoId="qr-video"
-                      scanDelay={500}
-                      ViewFinder={({ x, y, width, height }: { x: number; y: number; width: number; height: number }) => (
-                        <div
-                          style={{
-                            position: 'absolute',
-                            border: '2px solid #0ea5e9',
-                            borderRadius: '8px',
-                            top: `${y}px`,
-                            left: `${x}px`,
-                            width: `${width}px`,
-                            height: `${height}px`,
-                            zIndex: 9,
-                          }}
-                        />
-                      )}
-                      canvasProps={{ willReadFrequently: true }}
+                      onError={(error) => {
+                        console.error("QR Scanner error:", error);
+                      }}
+                      style={{ width: '100%' }}
+                      constraints={{
+                        video: { facingMode: 'environment' }
+                      }}
+                    />
+                    <div
+                      style={{
+                        position: 'absolute',
+                        top: '50%',
+                        left: '50%',
+                        width: '200px',
+                        height: '200px',
+                        transform: 'translate(-50%, -50%)',
+                        border: '2px solid #0ea5e9',
+                        borderRadius: '8px',
+                        zIndex: 9,
+                        pointerEvents: 'none'
+                      }}
                     />
                   </div>
                 ) : (
@@ -336,7 +343,7 @@ export default function QRScanner() {
                     <p className="text-center">Scanner is paused. Click "Start Scanning" to begin.</p>
                   </div>
                 )}
-                
+
                 {/* Recent Scans */}
                 <div className="mt-6">
                   <h3 className="text-md font-medium text-gray-900 mb-3">Recent Scans</h3>
@@ -363,9 +370,9 @@ export default function QRScanner() {
                             <span className="text-xs text-gray-500">{result.timestamp}</span>
                           </div>
                           <p className={`text-sm mt-1 ${
-                            result.success 
-                              ? result.type === 'in' 
-                                ? 'text-blue-700' 
+                            result.success
+                              ? result.type === 'in'
+                                ? 'text-blue-700'
                                 : 'text-purple-700'
                               : 'text-red-700'
                           }`}>
@@ -383,4 +390,4 @@ export default function QRScanner() {
       </main>
     </div>
   );
-} 
+}
