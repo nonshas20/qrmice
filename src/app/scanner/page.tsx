@@ -1,9 +1,9 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Html5Qrcode } from 'html5-qrcode';
 import Header from '@/components/Header';
+import QRScanner from '@/components/QRScanner';
 import {
   getStudentByQRCode,
   getEvents,
@@ -33,8 +33,6 @@ export default function QRScanner() {
   const [error, setError] = useState('');
   const [scanning, setScanning] = useState(false);
   const [scanResults, setScanResults] = useState<ScanResult[]>([]);
-  const scannerRef = useRef<Html5Qrcode | null>(null);
-  const scannerContainerRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     async function loadEvents() {
@@ -56,32 +54,6 @@ export default function QRScanner() {
     }
 
     loadEvents();
-  }, []);
-
-  useEffect(() => {
-    // Initialize scanner when component mounts and scannerContainerRef is available
-    if (typeof window !== 'undefined' && scannerContainerRef.current && !scannerRef.current) {
-      // Small delay to ensure DOM is fully rendered
-      const timer = setTimeout(() => {
-        try {
-          scannerRef.current = new Html5Qrcode('qr-reader');
-          console.log('Scanner initialized successfully');
-        } catch (err) {
-          console.error('Error initializing scanner:', err);
-        }
-      }, 1000);
-
-      return () => clearTimeout(timer);
-    }
-  }, [scannerContainerRef.current]); // Re-run when scannerContainerRef changes
-
-  // Cleanup scanner when component unmounts
-  useEffect(() => {
-    return () => {
-      if (scannerRef.current && scannerRef.current.isScanning) {
-        scannerRef.current.stop().catch(err => console.error('Error stopping scanner:', err));
-      }
-    };
   }, []);
 
   const handleScan = async (data: string | null) => {
@@ -168,57 +140,7 @@ export default function QRScanner() {
   };
 
   const toggleScanning = () => {
-    if (scanning) {
-      // Stop scanning
-      if (scannerRef.current && scannerRef.current.isScanning) {
-        scannerRef.current.stop()
-          .then(() => {
-            console.log('Scanner stopped');
-            setScanning(false);
-          })
-          .catch(err => {
-            console.error('Error stopping scanner:', err);
-          });
-      } else {
-        setScanning(false);
-      }
-    } else {
-      // Initialize scanner if not already initialized
-      if (!scannerRef.current && typeof window !== 'undefined') {
-        try {
-          scannerRef.current = new Html5Qrcode('qr-reader');
-          console.log('Scanner initialized on demand');
-        } catch (err) {
-          console.error('Error initializing scanner on demand:', err);
-          return; // Exit if initialization fails
-        }
-      }
-
-      // Start scanning
-      if (scannerRef.current && !scannerRef.current.isScanning) {
-        const config = { fps: 10, qrbox: 250 };
-        scannerRef.current.start(
-          { facingMode: 'environment' },
-          config,
-          (decodedText) => {
-            handleScan(decodedText);
-          },
-          (errorMessage) => {
-            console.error('QR Code scanning error:', errorMessage);
-          }
-        )
-        .then(() => {
-          console.log('Scanner started');
-          setScanning(true);
-        })
-        .catch(err => {
-          console.error('Error starting scanner:', err);
-        });
-      } else if (!scannerRef.current) {
-        console.error('Scanner not initialized');
-        alert('Could not initialize the QR scanner. Please refresh the page and try again.');
-      }
-    }
+    setScanning(!scanning);
   };
 
   if (loading) {
@@ -372,32 +294,9 @@ export default function QRScanner() {
               <div className="card-body">
                 {scanning ? (
                   <div className="overflow-hidden rounded-lg relative" style={{ minHeight: '350px' }}>
-                    <div
-                      id="qr-reader"
-                      ref={scannerContainerRef}
-                      className="qr-reader-container"
-                      style={{
-                        width: '100%',
-                        minHeight: '300px',
-                        position: 'relative',
-                        border: '1px solid #ddd',
-                        borderRadius: '8px',
-                        overflow: 'hidden'
-                      }}
-                    ></div>
-                    <div
-                      style={{
-                        position: 'absolute',
-                        top: '50%',
-                        left: '50%',
-                        width: '250px',
-                        height: '250px',
-                        transform: 'translate(-50%, -50%)',
-                        border: '2px solid #0ea5e9',
-                        borderRadius: '8px',
-                        zIndex: 9,
-                        pointerEvents: 'none'
-                      }}
+                    <QRScanner
+                      onScan={handleScan}
+                      isScanning={scanning}
                     />
                   </div>
                 ) : (
