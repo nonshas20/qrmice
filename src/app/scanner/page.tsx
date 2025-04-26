@@ -59,12 +59,24 @@ export default function QRScanner() {
   }, []);
 
   useEffect(() => {
-    // Initialize scanner when component mounts
-    if (typeof window !== 'undefined' && !scannerRef.current) {
-      scannerRef.current = new Html5Qrcode('qr-reader');
-    }
+    // Initialize scanner when component mounts and scannerContainerRef is available
+    if (typeof window !== 'undefined' && scannerContainerRef.current && !scannerRef.current) {
+      // Small delay to ensure DOM is fully rendered
+      const timer = setTimeout(() => {
+        try {
+          scannerRef.current = new Html5Qrcode('qr-reader');
+          console.log('Scanner initialized successfully');
+        } catch (err) {
+          console.error('Error initializing scanner:', err);
+        }
+      }, 1000);
 
-    // Cleanup scanner when component unmounts
+      return () => clearTimeout(timer);
+    }
+  }, [scannerContainerRef.current]); // Re-run when scannerContainerRef changes
+
+  // Cleanup scanner when component unmounts
+  useEffect(() => {
     return () => {
       if (scannerRef.current && scannerRef.current.isScanning) {
         scannerRef.current.stop().catch(err => console.error('Error stopping scanner:', err));
@@ -171,6 +183,17 @@ export default function QRScanner() {
         setScanning(false);
       }
     } else {
+      // Initialize scanner if not already initialized
+      if (!scannerRef.current && typeof window !== 'undefined') {
+        try {
+          scannerRef.current = new Html5Qrcode('qr-reader');
+          console.log('Scanner initialized on demand');
+        } catch (err) {
+          console.error('Error initializing scanner on demand:', err);
+          return; // Exit if initialization fails
+        }
+      }
+
       // Start scanning
       if (scannerRef.current && !scannerRef.current.isScanning) {
         const config = { fps: 10, qrbox: 250 };
@@ -191,6 +214,9 @@ export default function QRScanner() {
         .catch(err => {
           console.error('Error starting scanner:', err);
         });
+      } else if (!scannerRef.current) {
+        console.error('Scanner not initialized');
+        alert('Could not initialize the QR scanner. Please refresh the page and try again.');
       }
     }
   };
@@ -345,14 +371,18 @@ export default function QRScanner() {
               </div>
               <div className="card-body">
                 {scanning ? (
-                  <div className="overflow-hidden rounded-lg relative">
+                  <div className="overflow-hidden rounded-lg relative" style={{ minHeight: '350px' }}>
                     <div
                       id="qr-reader"
                       ref={scannerContainerRef}
+                      className="qr-reader-container"
                       style={{
                         width: '100%',
                         minHeight: '300px',
-                        position: 'relative'
+                        position: 'relative',
+                        border: '1px solid #ddd',
+                        borderRadius: '8px',
+                        overflow: 'hidden'
                       }}
                     ></div>
                     <div
